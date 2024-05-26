@@ -1,6 +1,7 @@
 # WebUI Fooocus Prompt Expansion Plugin
 
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)]
+[![License: CC-By NC 4.0](https://img.shields.io/badge/License-CC--By%20NC%204.0-blue.svg)]
 ### **Non-Commercial Use**: The plugin is available for non-commercial use outside Fooocus.
 
 This project extracts the prompt expansion module from Fooocus and integrates it as a plugin into the Stable Diffusion WebUI.
@@ -14,7 +15,6 @@ This plugin is just a wrapper, and its performance might be low. Pull requests t
 - [Contributing](#contributing)
 - [Acknowledgements](#acknowledgements)
 
-- 
 
 ## Installation
 
@@ -33,8 +33,11 @@ To install the plugin, follow these steps:
 ## Usage
 
 Just press enable expansion in the webui.
+
 Apologize that the seed cannot be saved in the metadata in the output png.
-We'll solve this issue as soon as possible.
+I'll try to solve this issue as soon as possible.
+
+However, the expanded prompt will be send to the prompt. You can disable prompt expansion to get the same result temporary.
 
 
 ## License
@@ -59,6 +62,6 @@ We welcome contributions to improve this plugin! To contribute, please follow th
 - Thanks to the Stable Diffusion community for their support and contributions.
 - Thanks to GPT-4o for the README generate and code modification.
 
----
+
 
 For any issues or questions, please open an issue on the [GitHub repository](https://github.com/power88/webui-fooocus-prompt-expansion/issues).
