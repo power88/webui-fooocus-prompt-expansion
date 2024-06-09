@@ -153,6 +153,14 @@ def create_positive(positive, seed):
 
 class FooocusPromptExpansion(scripts.Script):
     infotext_fields = []
+    prompt_elm = None
+
+    def __init__(self):
+        super().__init__()
+        self.on_after_component_elem_id = [
+            ('txt2img_prompt', self.save_prompt_box),
+            ('img2img_prompt', self.save_prompt_box),
+        ]
 
     def title(self):
         return 'Fooocus Prompt Expansion'
@@ -162,8 +170,28 @@ class FooocusPromptExpansion(scripts.Script):
 
     def ui(self, is_img2img):
         with InputAccordion(False, label="Fooocus Expansion") as is_enabled:
-            seed = gr.Number(value=0, maximum=63, label="Seed", info="Seed for random number generator")
+            seed = gr.Number(value=0, label="Seed", info="Seed for random number generator")
+            if self.prompt_elm is not None:
+                with gr.Row():
+                    generate = gr.Button('Generate expansion prompts')
+                    apply = gr.Button('Apply expansion to prompts')
+                preview = gr.Textbox('', label="Expansion preview", interactive=False)
+
+                for x in [preview, generate, apply]:
+                    x.save_to_config = False
+
+                generate.click(
+                    fn=create_positive,
+                    inputs=[self.prompt_elm, seed],
+                    outputs=[preview],
+                )
+                apply.click(
+                    fn=lambda *args: (False, create_positive(*args)),
+                    inputs=[self.prompt_elm, seed],
+                    outputs=[is_enabled, self.prompt_elm],
+                )
         self.infotext_fields.append((is_enabled, lambda d: False))
+
         return [is_enabled, seed]
 
     def process(self, p, is_enabled, seed):
@@ -174,11 +202,5 @@ class FooocusPromptExpansion(scripts.Script):
             positivePrompt = create_positive(prompt, seed)
             p.all_prompts[i] = positivePrompt
 
-    def after_component(self, component, **kwargs):
-        # https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/7456#issuecomment-1414465888 helpfull link
-        # Find the text2img textbox component
-        if kwargs.get("elem_id") == "txt2img_prompt":  # postive prompt textbox
-            self.boxx = component
-        # Find the img2img textbox component
-        if kwargs.get("elem_id") == "img2img_prompt":  # postive prompt textbox
-            self.boxxIMG = component
+    def save_prompt_box(self, on_component):
+        self.prompt_elm = on_component.component
