@@ -20,6 +20,7 @@ from transformers.generation.logits_process import LogitsProcessorList
 from transformers import AutoTokenizer, AutoModelForCausalLM, set_seed
 from modules import scripts, paths_internal, errors, shared, script_callbacks
 from modules.ui_components import InputAccordion
+from functools import lru_cache
 
 
 def text_encoder_device():
@@ -223,14 +224,12 @@ class FooocusExpansion:
         return result
 
 
-def createPositive(positive, seed):
-    try:
-        expansion = FooocusExpansion()
-        positive = expansion(positive, seed=seed)
-        expansion.unload_model()  # Unload the model after use
-        return positive
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+@lru_cache(maxsize=1024)
+def create_positive(positive, seed):
+    expansion = FooocusExpansion()
+    positive = expansion(positive, seed=seed)
+    expansion.unload_model()  # Unload the model after use
+    return positive
 
 
 class FooocusPromptExpansion(scripts.Script):
@@ -253,7 +252,7 @@ class FooocusPromptExpansion(scripts.Script):
             return
 
         for i, prompt in enumerate(p.all_prompts):
-            positivePrompt = createPositive(prompt, seed)
+            positivePrompt = create_positive(prompt, seed)
             p.all_prompts[i] = positivePrompt
 
     def after_component(self, component, **kwargs):
