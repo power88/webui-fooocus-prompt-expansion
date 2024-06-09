@@ -101,7 +101,7 @@ class FooocusExpansion:
     @torch.no_grad()
     @torch.inference_mode()
     def __call__(self, prompt, seed):
-        if prompt == '':
+        if not prompt:
             return ''
 
         seed = int(seed) % SEED_LIMIT_NUMPY
@@ -129,6 +129,8 @@ class FooocusExpansion:
 
 @lru_cache(maxsize=1024)
 def create_positive(positive, seed):
+    if not positive:
+        return ''
     expansion = FooocusExpansion()
     positive = expansion(positive, seed=seed)
     expansion.unload_model()  # Unload the model after use
