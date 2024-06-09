@@ -185,8 +185,7 @@ class FooocusPromptExpansion(scripts.Script):
             return
 
         for i, prompt in enumerate(p.all_prompts):
-            positive_prompt = create_positive(prompt, seed)
-            p.all_prompts[i] = positive_prompt
+            p.all_prompts[i] = create_positive(prompt, seed)
 
     def save_prompt_box(self, on_component):
         self.prompt_elm = on_component.component
