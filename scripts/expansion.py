@@ -234,8 +234,7 @@ def createPositive(positive, seed):
 
 
 class FooocusPromptExpansion(scripts.Script):
-    def __init__(self) -> None:
-        super().__init__()
+    infotext_fields = []
 
     def title(self):
         return 'Fooocus Prompt Expansion'
@@ -246,6 +245,7 @@ class FooocusPromptExpansion(scripts.Script):
     def ui(self, is_img2img):
         with InputAccordion(False, label="Fooocus Expansion") as is_enabled:
             seed = gr.Number(value=0, maximum=63, label="Seed", info="Seed for random number generator")
+        self.infotext_fields.append((is_enabled, lambda d: False))
         return [is_enabled, seed]
 
     def process(self, p, is_enabled, seed):
