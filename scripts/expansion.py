@@ -25,11 +25,13 @@ def text_encoder_device():
     else:
         return torch.device("cpu")
 
+
 def text_encoder_offload_device():
     if torch.cuda.is_available():
         return torch.device(torch.cuda.current_device())
     else:
         return torch.device("cpu")
+
 
 def get_free_memory(dev=None, torch_free_too=False):
     global directml_enabled
@@ -41,7 +43,7 @@ def get_free_memory(dev=None, torch_free_too=False):
         mem_free_torch = mem_free_total
     else:
         if directml_enabled:
-            mem_free_total = 1024 * 1024 * 1024 #TODO
+            mem_free_total = 1024 * 1024 * 1024  # TODO
             mem_free_torch = mem_free_total
         else:
             stats = torch.cuda.memory_stats(dev)
@@ -52,9 +54,8 @@ def get_free_memory(dev=None, torch_free_too=False):
             mem_free_total = mem_free_cuda + mem_free_torch
 
 
-
 # limitation of np.random.seed(), called from transformers.set_seed()
-SEED_LIMIT_NUMPY = 2**32
+SEED_LIMIT_NUMPY = 2 ** 32
 neg_inf = - 8192.0
 ext_dir = basedir()
 path_fooocus_expansion = os.path.join('.', "models", "prompt_expansion")
@@ -72,6 +73,7 @@ def remove_pattern(x, pattern):
         x = x.replace(p, '')
     return x
 
+
 def should_use_fp16(device=None, model_params=0, prioritize_performance=True):
     if device is not None:
         if hasattr(device, 'type'):
@@ -85,9 +87,9 @@ def should_use_fp16(device=None, model_params=0, prioritize_performance=True):
         return False
 
     fp16_works = False
-    #FP16 is confirmed working on a 1080 (GP104) but it's a bit slower than FP32 so it should only be enabled
-    #when the model doesn't actually fit on the card
-    #TODO: actually test if GP106 and others have the same type of behavior
+    # FP16 is confirmed working on a 1080 (GP104) but it's a bit slower than FP32 so it should only be enabled
+    # when the model doesn't actually fit on the card
+    # TODO: actually test if GP106 and others have the same type of behavior
     nvidia_10_series = ["1080", "1070", "titan x", "p3000", "p3200", "p4000", "p4200", "p5000", "p5200", "p6000", "1060", "1050"]
     for x in nvidia_10_series:
         if x in props.name.lower():
@@ -101,7 +103,7 @@ def should_use_fp16(device=None, model_params=0, prioritize_performance=True):
     if props.major < 7:
         return False
 
-    #FP16 is just broken on these cards
+    # FP16 is just broken on these cards
     nvidia_16_series = ["1660", "1650", "1630", "T500", "T550", "T600", "MX550", "MX450", "CMP 30HX", "T2000", "T1000", "T1200"]
     for x in nvidia_16_series:
         if x in props.name:
@@ -109,11 +111,13 @@ def should_use_fp16(device=None, model_params=0, prioritize_performance=True):
 
     return True
 
+
 def is_device_mps(device):
     if hasattr(device, 'type'):
         if (device.type == 'mps'):
             return True
-    return False 
+    return False
+
 
 class FooocusExpansion:
     def __init__(self):
@@ -201,6 +205,7 @@ class FooocusExpansion:
 
         return result
 
+
 def createPositive(positive, seed):
     try:
         expansion = FooocusExpansion()
@@ -210,16 +215,17 @@ def createPositive(positive, seed):
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
+
 class FooocusPromptExpansion(scripts.Script):
     def __init__(self) -> None:
         super().__init__()
-    
+
     def title(self):
         return 'Fooocus Prompt Expansion'
-    
+
     def show(self, is_img2img):
         return scripts.AlwaysVisible
-    
+
     def ui(self, is_img2img):
         with gr.Group():
             with gr.Accordion("Fooocus Expansion", open=True):
@@ -228,7 +234,7 @@ class FooocusPromptExpansion(scripts.Script):
                 seed = gr.Number(
                     value=0, maximum=63, label="Seed", info="Seed for random number generator")
         return [is_enabled, seed]
-    
+
     def process(self, p, is_enabled, seed):
         if not is_enabled:
             return
@@ -237,8 +243,6 @@ class FooocusPromptExpansion(scripts.Script):
             positivePrompt = createPositive(prompt, seed)
             p.all_prompts[i] = positivePrompt
 
-        
-    
     def after_component(self, component, **kwargs):
         # https://github.com/AUTOMATIC1111/stable-diffusion-webui/pull/7456#issuecomment-1414465888 helpfull link
         # Find the text2img textbox component
