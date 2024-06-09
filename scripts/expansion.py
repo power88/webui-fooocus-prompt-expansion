@@ -19,7 +19,7 @@ from huggingface_hub import hf_hub_download
 from transformers.generation.logits_process import LogitsProcessorList
 from transformers import AutoTokenizer, AutoModelForCausalLM, set_seed
 from modules import scripts, paths_internal, errors, shared, script_callbacks
-from modules.ui_components import FormRow, FormColumn, FormGroup, ToolButton
+from modules.ui_components import InputAccordion
 
 
 def text_encoder_device():
@@ -244,12 +244,8 @@ class FooocusPromptExpansion(scripts.Script):
         return scripts.AlwaysVisible
 
     def ui(self, is_img2img):
-        with gr.Group():
-            with gr.Accordion("Fooocus Expansion", open=True):
-                is_enabled = gr.Checkbox(
-                    value=True, label="Enable Expansion", info="Enable Or Disable Expansion ")
-                seed = gr.Number(
-                    value=0, maximum=63, label="Seed", info="Seed for random number generator")
+        with InputAccordion(False, label="Fooocus Expansion") as is_enabled:
+            seed = gr.Number(value=0, maximum=63, label="Seed", info="Seed for random number generator")
         return [is_enabled, seed]
 
     def process(self, p, is_enabled, seed):
