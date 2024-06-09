@@ -18,44 +18,9 @@ from modules.scripts import basedir
 from huggingface_hub import hf_hub_download
 from transformers.generation.logits_process import LogitsProcessorList
 from transformers import AutoTokenizer, AutoModelForCausalLM, set_seed
-from modules import scripts, paths_internal, errors, shared, script_callbacks
+from modules import scripts, paths_internal, errors, devices, shared, script_callbacks
 from modules.ui_components import InputAccordion
 from functools import lru_cache
-
-
-def text_encoder_device():
-    if torch.cuda.is_available():
-        return torch.device(torch.cuda.current_device())
-    else:
-        return torch.device("cpu")
-
-
-def text_encoder_offload_device():
-    if torch.cuda.is_available():
-        return torch.device(torch.cuda.current_device())
-    else:
-        return torch.device("cpu")
-
-
-def get_free_memory(dev=None, torch_free_too=False):
-    global directml_enabled
-    if dev is None:
-        dev = text_encoder_device()
-
-    if hasattr(dev, 'type') and (dev.type == 'cpu' or dev.type == 'mps'):
-        mem_free_total = psutil.virtual_memory().available
-        mem_free_torch = mem_free_total
-    else:
-        if directml_enabled:
-            mem_free_total = 1024 * 1024 * 1024  # TODO
-            mem_free_torch = mem_free_total
-        else:
-            stats = torch.cuda.memory_stats(dev)
-            mem_active = stats['active_bytes.all.current']
-            mem_reserved = stats['reserved_bytes.all.current']
-            mem_free_cuda, _ = torch.cuda.mem_get_info(dev)
-            mem_free_torch = mem_reserved - mem_active
-            mem_free_total = mem_free_cuda + mem_free_torch
 
 
 # limitation of np.random.seed(), called from transformers.set_seed()
@@ -91,44 +56,6 @@ def remove_pattern(x, pattern):
     return x
 
 
-def should_use_fp16(device=None, model_params=0, prioritize_performance=True):
-    if device is not None:
-        if hasattr(device, 'type'):
-            if device.type == 'cpu':
-                return False
-        return False
-    if torch.cuda.is_bf16_supported():
-        return True
-    props = torch.cuda.get_device_properties("cuda")
-    if props.major < 6:
-        return False
-
-    fp16_works = False
-    # FP16 is confirmed working on a 1080 (GP104) but it's a bit slower than FP32 so it should only be enabled
-    # when the model doesn't actually fit on the card
-    # TODO: actually test if GP106 and others have the same type of behavior
-    nvidia_10_series = ["1080", "1070", "titan x", "p3000", "p3200", "p4000", "p4200", "p5000", "p5200", "p6000", "1060", "1050"]
-    for x in nvidia_10_series:
-        if x in props.name.lower():
-            fp16_works = True
-
-    if fp16_works:
-        free_model_memory = (get_free_memory() * 0.9 - (1024 * 1024 * 1024))
-        if (not prioritize_performance) or model_params * 4 > free_model_memory:
-            return True
-
-    if props.major < 7:
-        return False
-
-    # FP16 is just broken on these cards
-    nvidia_16_series = ["1660", "1650", "1630", "T500", "T550", "T600", "MX550", "MX450", "CMP 30HX", "T2000", "T1000", "T1200"]
-    for x in nvidia_16_series:
-        if x in props.name:
-            return False
-
-    return True
-
-
 def is_device_mps(device):
     if hasattr(device, 'type'):
         if (device.type == 'mps'):
@@ -160,16 +87,8 @@ class FooocusExpansion:
         self.model = AutoModelForCausalLM.from_pretrained(fooocus_expansion_model_dir)
         self.model.eval()
 
-        load_model_device = text_encoder_device()
-        offload_device = text_encoder_offload_device()
-
-        # MPS hack
-        if is_device_mps(load_model_device):
-            load_model_device = torch.device('cpu')
-            offload_device = torch.device('cpu')
-
-        use_fp16 = should_use_fp16(device=load_model_device)
-
+        load_model_device = devices.get_optimal_device_name()
+        use_fp16 = devices.dtype == torch.float16
         if use_fp16:
             self.model.half()
 
