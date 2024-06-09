@@ -15,7 +15,7 @@ import psutil
 from modules.scripts import basedir
 from transformers.generation.logits_process import LogitsProcessorList
 from transformers import AutoTokenizer, AutoModelForCausalLM, set_seed
-from modules import scripts, shared, script_callbacks
+from modules import scripts, paths_internal, shared, script_callbacks
 from modules.ui_components import FormRow, FormColumn, FormGroup, ToolButton
 
 
@@ -58,7 +58,7 @@ def get_free_memory(dev=None, torch_free_too=False):
 SEED_LIMIT_NUMPY = 2 ** 32
 neg_inf = - 8192.0
 ext_dir = basedir()
-path_fooocus_expansion = os.path.join('.', "models", "prompt_expansion")
+path_fooocus_expansion = os.path.join(paths_internal.models_path, "prompt_expansion")
 
 
 def safe_str(x):
